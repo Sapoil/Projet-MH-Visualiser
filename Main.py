@@ -16,5 +16,8 @@ if __name__ == "__main__":
 		mh.getChapters()
 	except Exception as e:
 		print(e)
-	end = time.time()
-	print(f"Execution time: {end - start} seconds")
+	finally:
+		mh.close()
+		end = time.time()
+		print(f"Execution time: {end - start} seconds")
+	

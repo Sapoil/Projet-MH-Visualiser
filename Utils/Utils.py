@@ -1,32 +1,38 @@
-from bs4 import BeautifulSoup
-import requests
 import os
+import requests
+from selenium.webdriver.common.by import By
+import time
 
-session = requests.Session()
-session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-})
+def get_html_elements(driver,page_url, element):
+    """Récupère les liens des images d'une page avec JavaScript."""
+    try:
+        driver.get(page_url)
+        time.sleep(1)  # Attendre le chargement du JavaScript
+        elements = driver.find_elements(By.TAG_NAME, element)
+        return elements
+    
+    except Exception as e:
+        print(f"❌ Erreur lors de la récupération des éléments : {e}")
+        return []
 
-def get_html_elements(url, element):
-		try:
-			response = session.get(url)
-			response.raise_for_status()
-			soup = BeautifulSoup(response.text, 'html.parser')
-			elements = soup.find_all(element)
-			return elements
-		except requests.exceptions.RequestException as e:
-			print(f"Error fetching the URL: {e}")
-			return []
-		
 def download_image(url, folder_path, image_name):
-		try:
-			response = session.get(url)
-			response.raise_for_status()
-			with open(os.path.join(folder_path, image_name), 'wb') as file:
-				file.write(response.content)
-		except requests.exceptions.RequestException as e:
-			print(f"Error downloading the image: {e}")
-			
+    """Télécharge une image à partir de son URL."""
+    try:
+        response = requests.get(url, stream=True)
+        response.raise_for_status()  # Vérifie si la requête a réussi
+
+        os.makedirs(folder_path, exist_ok=True)  # Création du dossier si nécessaire
+
+        image_path = os.path.join(folder_path, image_name)
+        with open(image_path, 'wb') as file:
+            for chunk in response.iter_content(1024):
+                file.write(chunk)
+
+        print(f"Image téléchargée : {image_path}")
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Erreur lors du téléchargement de l'image {url} : {e}")
+		
 def createFolder(directory):
     try:
         if not os.path.exists(directory):

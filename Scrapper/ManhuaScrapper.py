@@ -2,6 +2,10 @@
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
 #Project imports
 from Utils.Utils import createFolder, get_html_elements, download_image
@@ -11,6 +15,17 @@ PATH = "MH/"
 
 class ManhuaScrapper(ABC):
 	def __init__(self, url):
+		
+		chrome_options = Options()
+		chrome_options.add_argument("--headless=new")  # Exécuter sans affichage
+		chrome_options.add_argument("--disable-gpu")
+		chrome_options.add_argument("--no-sandbox")
+		chrome_options.add_argument("--window-size=1920x1080")
+		chrome_options.add_argument("--disable-software-rasterizer")
+
+		service = Service()
+
+		self.driver = webdriver.Chrome(service=service, options=chrome_options)
 		self.url = url
 		self.title = self.getTitle()
 		self.path = PATH+self.title
@@ -65,6 +80,11 @@ class ManhuaScrapper(ABC):
 	def imgFilter(self, element):
 		pass
 
+	def close(self):
+		"""Ferme le driver Selenium proprement."""
+		if self.driver:
+			self.driver.quit()
+
 	def download_chapter(self, chapter_number):
 		chapter = self.Chapter(self, self.url + self.chapterUrlEnd(), chapter_number, self.path)
 		print(chapter)
@@ -82,16 +102,16 @@ class ManhuaScrapper(ABC):
 			return f"Chapter {self.nbr}\nURL: {self.url}\nPath: {self.path}"
 		
 		def createChapter(self):
-			images = get_html_elements(self.url, 'img')
+			images = get_html_elements(self.scrapper.driver,self.url, 'img')
 			images = [image for image in images if self.scrapper.imgFilter(image)]
 			if not createFolder(self.path):
 				images = [image for image in images if not os.path.exists(self.path + "/" + str(images.index(image)) + ".jpg")]
 				if len(images) == 0:
 					return
 			max_threads = min(10, len(images))
-			with ThreadPoolExecutor(max_threads) as executor:
+			with ThreadPoolExecutor(max_workers=max_threads) as executor:
 				future_to_image = {
-					executor.submit(download_image, image['src'], self.path, f"{index}.jpg"): image
+					executor.submit(download_image, image.get_attribute('src'), self.path, f"{index}.jpg"): image
 					for index, image in enumerate(images)
 				}
 
@@ -100,4 +120,3 @@ class ManhuaScrapper(ABC):
 						future.result()
 					except Exception as e:
 						print(f"Error downloading image: {e}")
-

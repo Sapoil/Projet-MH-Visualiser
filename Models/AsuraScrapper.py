@@ -1,5 +1,9 @@
 from Scrapper.ManhuaScrapper import ManhuaScrapper
 from Utils.Utils import get_html_elements, download_image
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
 class AsuraScrapper(ManhuaScrapper):
 
@@ -12,27 +16,21 @@ class AsuraScrapper(ManhuaScrapper):
 
     def chapterUrlEnd(self):
         return "/chapter/"
-    
-    # def getChapters(self):
-    #     stoppers = self.getStopper()
-    #     for i in range(stoppers[0], stoppers[1] + 1):
-    #         chapter = self.Chapter(self,self.url + "/chapter/", i, self.path)
-    #         self.chapters.append(chapter)
 
     def getCover(self):
-        elements = get_html_elements(self.url, 'img')
+        elements = get_html_elements(self.driver,self.url, 'img')
         for element in elements:
-            if element.get('alt') == ['poster']:
-                image_url = element['src']
+            if 'poster' in element.get_attribute('alt'):
+                image_url = element.get_attribute('src')
                 image_name = "cover.jpg"
                 download_image(image_url, self.path, image_name)
                 return  self.path + "/" + image_name
         
     def getStopper(self):
-        elements = get_html_elements(self.url, 'span')
+        elements = get_html_elements(self.driver, self.url, 'span')
         begin, end = -1, -1
         for element in elements:
-            if element.get('class') == ['pl-[1px]']:
+            if 'pl-[1px]' in element.get_attribute('class'):
                 if begin == -1:
                     begin = int(element.text)
                 else:
@@ -40,4 +38,4 @@ class AsuraScrapper(ManhuaScrapper):
         return begin, end
     
     def imgFilter(self, image):
-        return (not image.get('src').startswith('/images'))
+        return 'chapter' in image.get_attribute('alt')
