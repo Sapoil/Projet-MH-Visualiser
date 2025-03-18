@@ -22,6 +22,8 @@ class ManhuaScrapper(ABC):
 		chrome_options.add_argument("--no-sandbox")
 		chrome_options.add_argument("--window-size=1920x1080")
 		chrome_options.add_argument("--disable-software-rasterizer")
+		chrome_options.add_argument("--ignore-certificate-errors")  # ✅ Ignore les erreurs SSL
+		chrome_options.add_argument("--allow-running-insecure-content")  # ✅ Autorise le contenu non sécurisé
 
 		service = Service()
 
@@ -52,21 +54,9 @@ class ManhuaScrapper(ABC):
 		num_chapters = end - start + 1
 		max_threads = min(5, num_chapters)  # ✅ Évite d’ouvrir trop de threads
 
-		print(f"📥 Téléchargement de {num_chapters} chapitres en parallèle...")
-
-		with ThreadPoolExecutor(max_workers=max_threads) as executor:
-			future_to_chapter = {
-				executor.submit(self.download_chapter, i): i
-				for i in range(start, end + 1)
-			}
-
-			for future in as_completed(future_to_chapter):
-				chapter_number = future_to_chapter[future]
-				try:
-					future.result()  # ✅ Vérifie si le téléchargement a réussi
-					print(f"✅ Chapitre {chapter_number} téléchargé avec succès !")
-				except Exception as e:
-					print(f"❌ Erreur sur le chapitre {chapter_number}: {e}")
+		for i in range(start, end + 1):
+			self.download_chapter(i)
+			print(f"{int(i/num_chapters*100)}%")
 
 	@abstractmethod
 	def getCover(self):
@@ -87,7 +77,6 @@ class ManhuaScrapper(ABC):
 
 	def download_chapter(self, chapter_number):
 		chapter = self.Chapter(self, self.url + self.chapterUrlEnd(), chapter_number, self.path)
-		print(chapter)
 		self.chapters.append(chapter)
 
 	class Chapter:
@@ -108,7 +97,8 @@ class ManhuaScrapper(ABC):
 				images = [image for image in images if not os.path.exists(self.path + "/" + str(images.index(image)) + ".jpg")]
 				if len(images) == 0:
 					return
-			max_threads = min(10, len(images))
+				
+			max_threads = min(30, len(images))
 			with ThreadPoolExecutor(max_workers=max_threads) as executor:
 				future_to_image = {
 					executor.submit(download_image, image.get_attribute('src'), self.path, f"{index}.jpg"): image

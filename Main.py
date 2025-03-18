@@ -10,7 +10,7 @@ from Factory.ScrapperFactory import ScrapperFactory
 #Toongod non pris en compte, probablement générer avec JS, donc il faudrait utiliser Selenium
 if __name__ == "__main__":
 	start = time.time()
-	url = "https://asuracomic.net/series/artifact-devouring-player-c614b581"  # Replace with the target URL
+	url = "https://asuracomic.net/series/the-regressed-son-of-a-duke-is-an-assassin-5f701ed2"  # Replace with the target URL
 	try:
 		mh = ScrapperFactory.getScrapper(url)
 		mh.getChapters()

@@ -1,5 +1,5 @@
 from Models.AsuraScrapper import AsuraScrapper
-from Models.TonngodScrapper import ToongodScrapper
+from Models.ToongodScrapper import ToongodScrapper
 
 class ScrapperNotSupported(Exception):
     pass

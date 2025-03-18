@@ -27,8 +27,6 @@ def download_image(url, folder_path, image_name):
         with open(image_path, 'wb') as file:
             for chunk in response.iter_content(1024):
                 file.write(chunk)
-
-        print(f"Image téléchargée : {image_path}")
     
     except requests.exceptions.RequestException as e:
         print(f"Erreur lors du téléchargement de l'image {url} : {e}")
